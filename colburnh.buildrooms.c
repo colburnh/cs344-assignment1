@@ -88,15 +88,44 @@ int main(void) {
     /* generate room files */
 
     char names[10][9] = {"coffee", "tea", "water", "beer", "wine", "cocktail", "milk", "smoothie", "soda", "seltzer"};
+    int usedNums[10], current;
+    int counter = 0;
+
+    printf("num of elements in array: %d\n", counter);
 
     /* choose 7 at random from 10 names */
     int size = 10;
-
     int roomNum = getRoomNum(size);
+
+    /* check if room num has already been used */
+
+    for (current = 0; current < size; current++)
+    {
+        if (usedNums[current] == roomNum) {   /* If required element is found */
+            printf("%d is present at location %d.\n", roomNum, current + 1);
+            // get another number
+            break;
+            }
+        }
+        if (current == size) {
+            printf("%d isn't present in the array.\n", roomNum);
+            usedNums[counter] = roomNum;
+        }
+
     printf("room num: %d\n", roomNum);
     char *roomName = &names[roomNum][0];
     struct Room currentRoom = {.name = roomName};
     printf("room name: %s\n", currentRoom.name);
+
+    if (size == 10){
+        currentRoom.type = "START_ROOM";
+    } else if (size == 9){
+        currentRoom.type = "END_ROOM";
+    } else {
+        currentRoom.type = "MID_ROOM";
+    }
+
+    printf("type: %s\n", currentRoom.type);
 
     /* create room file */
     char *fileTail = "_room.txt";
@@ -110,14 +139,30 @@ int main(void) {
 
     printf("file name: %s\n", fileName);
 
-    int file_descriptor;
+    int fileDescriptor;
 
-    file_descriptor = open(fileName, O_RDWR | O_CREAT | O_TRUNC, S_IRUSR | S_IWUSR);
-	if (file_descriptor == -1){
+    fileDescriptor = open(fileName, O_RDWR | O_CREAT | O_TRUNC, S_IRUSR | S_IWUSR);
+	if (fileDescriptor == -1){
 		printf("open() failed on \"%s\"\n", fileName);
 		perror("Error");
 		exit(1);
 	}
+
+    // We write a string to the file
+    // char *roomInfo = currentRoom.name;
+    // int howMany = write(fileDescriptor, roomInfo, strlen(roomInfo) + 1);
+    // printf("wrote %d bytes to the file\n", howMany);
+    
+    //fwrite (&currentRoom, sizeof(struct Room), 1, fileDescriptor);
+    // if (fwrite != 0) {
+    //     printf("success");
+    // } else
+    // {
+    //     printf("error");
+    // }
+    
+    // Close the file descriptor
+    //close(fileDescriptor);
 
     // makeRoom();
     // size--;

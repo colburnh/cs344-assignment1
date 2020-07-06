@@ -1,0 +1,23 @@
+# depslib dependency file v1.0
+1593458642 source:/Users/holliscolburn/Documents/colburnh.assignment1/colburnh.adventure.c
+	<stdio.h>
+
+1593459024 source:/Users/holliscolburn/Documents/colburnh.assignment1/colburnh.buildrooms.c
+	<stdio.h>
+	<fcntl.h>
+	<stdlib.h>
+	<unistd.h>
+
+1593378766 source:/Users/holliscolburn/Documents/colburnh.assignment1/main.c
+	<stdio.h>
+	<stdlib.h>
+
+1593971205 source:/Users/holliscolburn/Documents/CS344-operating-systems/colburnh.assignment1/colburnh.buildrooms.c
+	<stdio.h>
+	<fcntl.h>
+	<stdlib.h>
+	<unistd.h>
+	<string.h>
+	<sys/stat.h>
+	<time.h>
+

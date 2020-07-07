@@ -1,12 +1,12 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <fcntl.h>
+#include <dirent.h>
 #include <unistd.h>
 #include <string.h>
 #include <sys/stat.h>
 #include <time.h>
-
-#define ROOM_SUFFIX "_room.txt"
+#include <math.h>
 
 struct Room {
     char *name;
@@ -38,146 +38,146 @@ void createDir(){
     str = dest;
 
     /* create directory with new directory name */
-    mkdir(str, O_RDWR | O_CREAT | O_TRUNC);
+    mkdir(str, S_IRWXU | S_IRWXG | S_IROTH | S_IXOTH);
 
     return;
 }
 
-int getRoomNum(int size){
-
-    srand(time(0));
-    int roomNum = (rand() % size);
-    printf("num in func: %d\n", roomNum);
-//     /* fix this */
-//     /* do {
-//         int roomNum = (rand() % size);
-//         printf("num in func: %d\n", roomNum);
-//         used = checkList(roomNum, size);
-//         printf("size in func: %d\n", size);
-//     } while(used == 0); */
-
-    return roomNum;
+char *getFilePath(char *directoryName, char *fileName){
+    /* adapted from class material */
+    /* copy parts of path and concatenate them in correct order */
+    char *filePath = malloc(strlen(directoryName) + strlen(fileName) + 2);
+    memset(filePath, '\0', strlen(directoryName) + strlen(fileName) + 2);
+    strcpy(filePath, directoryName);
+    strcat(filePath, "/");
+    strcat(filePath, fileName);
+    return filePath;
 }
 
-// int makeRoom(){
+int getRoomNum(){
+    /* random integer generating algorithm is adapted from the Knuth algorithm */
+    int usedNums[10], roomNum;
+    srand(time(0));
+    const int M = 7;
+    const int N = 10;
 
-//     /* create room file */
-//     char *fileTail = "_room.txt";
-//     printf("file tail: %s\n", fileTail);
+    int in, im;
+    im = 0;
 
-//     return 0;
-// }
+    /* integer is generated based on probability */
+    for (int i = 0; in < N && im < M; in++) {
+        int rn = N - in;
+        int rm = M - im;
+        if (rand() % rn < rm)
+            usedNums[im++] = in;
+    }
 
-// int checkList(int i, int size){
-//     int usedNums[10];
-//     int j;
-//     for (j = 0; j < size; i++)
-//     {
-//         if (usedNums[j] == i) {
-//             return 0;  /* it was found */
-//         }
-//    }
-//    return 1;  /* if it was not found */
-// }
+    return *usedNums;
+}
+
+char *findLatestDir() {
+    /* adapted from class material */
+    /* set up */
+    struct stat dirStat;
+    char directoryName[256];
+    char *latestDirName;
+    char *path = ".";
+
+    /* open directory */
+    DIR* currDir = opendir(path);
+    struct dirent *aDir;
+    time_t lastModifTime;
+    int i = 0;
+    char *prefix = "colburnh.rooms.";
+
+    while((aDir = readdir(currDir)) != NULL){
+        // Use strncmp to check if the directory name matches the prefix
+        if(strncmp(prefix, aDir->d_name, strlen(prefix)) == 0){
+            stat(aDir->d_name, &dirStat);
+            // Check to see if this is the directory with the latest modification time
+            if(i == 0 || difftime(dirStat.st_mtime, lastModifTime) > 0){
+                lastModifTime = dirStat.st_mtime;
+                memset(directoryName, '\0', sizeof(directoryName));
+                strcpy(directoryName, aDir->d_name);
+            }
+        i++;
+        }
+    }
+
+    /* create name of most recent directory */
+    latestDirName = malloc(sizeof(char) * (strlen(directoryName) + 1));
+    strcpy(latestDirName, directoryName);
+    return latestDirName;
+}
+
+int makeRoom(int size, int usedNums[]){
+    char names[10][9] = {"coffee", "tea", "water", "beer", "wine", "cocktail", "milk", "smoothie", "soda", "seltzer"};
+    int roomNum;
+    /* check if room num has already been used */
+    for (int i = 0; i < 7; i++) {
+
+        /* create room file */
+        char *roomName = &names[i][0];
+        struct Room currentRoom = {.name = roomName};
+        printf("room name: %s\n", currentRoom.name);
+
+        if (size == 10){
+            currentRoom.type = "START_ROOM";
+        } else if (size == 9){
+            currentRoom.type = "END_ROOM";
+        } else {
+            currentRoom.type = "MID_ROOM";
+        }
+
+        printf("type: %s\n", currentRoom.type);
+        size--;
+
+        /* create room file */
+        char *fileTail = "_room.txt";
+
+        /* allocate space for file name */
+        char *fileName = calloc(strlen(fileTail) + 9, sizeof(char));
+
+        /* concatenate room name and fileTail */
+        strcpy(fileName, currentRoom.name);
+        strcat(fileName, fileTail);
+
+        /* get most recent directory */
+        char *latestDirName = findLatestDir();
+
+        /* get file path */
+        char *filePath = getFilePath(latestDirName, fileName);
+        printf("filePath is %s\n", filePath);
+        int fileDescriptor;
+
+        /* create file */
+        fileDescriptor = open(filePath, O_RDWR | O_CREAT | O_TRUNC | O_APPEND, S_IRUSR | S_IWUSR);
+        if (fileDescriptor == -1){
+            printf("open() failed on \"%s\"\n", fileName);
+            perror("Error");
+            exit(1);
+        }
+
+        /* process file */
+
+        
+
+        // Close the file descriptor
+        close(fileDescriptor);
+    }
+    return size;
+}
 
 int main(void) {
-
     /* create directory */
     createDir();
 
-    /* generate room files */
-
-    char names[10][9] = {"coffee", "tea", "water", "beer", "wine", "cocktail", "milk", "smoothie", "soda", "seltzer"};
-    int usedNums[10], current;
-    int counter = 0;
-
-    printf("num of elements in array: %d\n", counter);
-
     /* choose 7 at random from 10 names */
     int size = 10;
-    int roomNum = getRoomNum(size);
-
-    /* check if room num has already been used */
-
-    for (current = 0; current < size; current++)
-    {
-        if (usedNums[current] == roomNum) {   /* If required element is found */
-            printf("%d is present at location %d.\n", roomNum, current + 1);
-            // get another number
-            break;
-            }
-        }
-        if (current == size) {
-            printf("%d isn't present in the array.\n", roomNum);
-            usedNums[counter] = roomNum;
-        }
-
-    printf("room num: %d\n", roomNum);
-    char *roomName = &names[roomNum][0];
-    struct Room currentRoom = {.name = roomName};
-    printf("room name: %s\n", currentRoom.name);
-
-    if (size == 10){
-        currentRoom.type = "START_ROOM";
-    } else if (size == 9){
-        currentRoom.type = "END_ROOM";
-    } else {
-        currentRoom.type = "MID_ROOM";
-    }
-
-    printf("type: %s\n", currentRoom.type);
-
-    /* create room file */
-    char *fileTail = "_room.txt";
-
-    /* allocate space for file name */
-    char *fileName = calloc(strlen(fileTail) + 9, sizeof(char));
-
-    /* concatenate room name and fileTail */
-    strcpy(fileName, currentRoom.name);
-    strcat(fileName, fileTail);
-
-    printf("file name: %s\n", fileName);
-
-    int fileDescriptor;
-
-    fileDescriptor = open(fileName, O_RDWR | O_CREAT | O_TRUNC, S_IRUSR | S_IWUSR);
-	if (fileDescriptor == -1){
-		printf("open() failed on \"%s\"\n", fileName);
-		perror("Error");
-		exit(1);
-	}
-
-    // We write a string to the file
-    // char *roomInfo = currentRoom.name;
-    // int howMany = write(fileDescriptor, roomInfo, strlen(roomInfo) + 1);
-    // printf("wrote %d bytes to the file\n", howMany);
     
-    //fwrite (&currentRoom, sizeof(struct Room), 1, fileDescriptor);
-    // if (fwrite != 0) {
-    //     printf("success");
-    // } else
-    // {
-    //     printf("error");
-    // }
-    
-    // Close the file descriptor
-    //close(fileDescriptor);
-
-    // makeRoom();
-    // size--;
-    // printf("size: %d\n", size);
-
-    /* for (int i = 0; i < 7; i++){
-        int roomNum = getRoomNum(size);
-        printf("room num: %d\n", roomNum);
-        makeRoom(i, size, &names[i]);
-        printf("room name: %s\n", names[i].name);
-        size--;
-        printf("size: %d\n", size);
-
-    } */
-
+    /* generate room files */
+    int numList = getRoomNum();
+    makeRoom(size, &numList);
     return 0;
 
     /* create room connections */
